@@ -1,0 +1,34 @@
+.mweb-output {
+  padding-top: 1rem;
+
+  .card {
+    background-color: var(--bg);
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+    margin-bottom: 0.5rem;
+  }
+
+  .mono {
+    font-family: monospace;
+    word-break: break-all;
+  }
+
+  .hex-block {
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .muted {
+    opacity: 0.6;
+  }
+
+  table { color: var(--fg); margin-bottom: 0; }
+  td, th { border-color: transparent; padding: 0.4rem 0.5rem; }
+}

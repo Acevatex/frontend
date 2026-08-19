@@ -1,0 +1,184 @@
+<div class="container-xl mweb-output">
+
+  <h1 class="float-left" i18n="mweb.output-title">MWEB Output</h1>
+  <div class="clearfix"></div>
+
+  <div *ngIf="error" class="alert alert-warning">{{ error }}</div>
+
+  <ng-container *ngIf="view$ | async as view">
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title" i18n="mweb.output-id">Output ID</h5>
+        <p class="card-text mono">{{ view.output.outputId }}</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title" i18n="mweb.output-block">Block</h5>
+        <table class="table table-borderless table-striped">
+          <tbody>
+            <tr>
+              <td i18n="mweb.block-hash">Block hash</td>
+              <td><a [routerLink]="['/block', view.blockHash]">{{ view.blockHash }}</a></td>
+            </tr>
+            <tr>
+              <td i18n="mweb.block-height">Height</td>
+              <td>{{ view.blockHeight }}</td>
+            </tr>
+            <tr>
+              <td i18n="mweb.block-time">Time</td>
+              <td><app-timestamp [unixTime]="view.blockTime" [customFormat]="'yyyy-MM-dd HH:mm:ss'" [hideTimeSince]="true"></app-timestamp></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title" i18n="mweb.output-fields">Output</h5>
+        <table class="table table-borderless table-striped">
+          <tbody>
+            <tr>
+              <td i18n="mweb.commitment">Commitment</td>
+              <td class="mono">{{ view.output.commitmentHex }}</td>
+            </tr>
+            <tr *ngIf="view.output.senderPubKeyHex">
+              <td i18n="mweb.sender-pubkey">Sender pubkey</td>
+              <td class="mono">{{ view.output.senderPubKeyHex }}</td>
+            </tr>
+            <tr *ngIf="view.output.receiverPubKeyHex">
+              <td i18n="mweb.receiver-pubkey">Receiver pubkey</td>
+              <td class="mono">{{ view.output.receiverPubKeyHex }}</td>
+            </tr>
+            <tr *ngIf="view.output.stealthAddress">
+              <td i18n="mweb.stealth-address">Stealth address</td>
+              <td class="mono">{{ view.output.stealthAddress }}</td>
+            </tr>
+            <tr>
+              <td i18n="mweb.range-proof">Range proof</td>
+              <td>
+                <span *ngIf="view.output.hasRangeProof" class="badge badge-secondary" i18n="mweb.range-proof-present">present</span>
+                <span *ngIf="!view.output.hasRangeProof" class="muted" i18n="mweb.range-proof-absent">absent</span>
+              </td>
+            </tr>
+            <tr *ngIf="view.output.rangeProofHashHex">
+              <td i18n="mweb.range-proof-hash">Range proof hash</td>
+              <td class="mono">{{ view.output.rangeProofHashHex }}</td>
+            </tr>
+            <tr *ngIf="view.output.signatureHex">
+              <td i18n="mweb.signature">Signature</td>
+              <td class="hex-block">{{ chunkHex(view.output.signatureHex) }}</td>
+            </tr>
+            <tr *ngIf="view.output.leafIndex != null">
+              <td i18n="mweb.leaf-index">MMR leaf index</td>
+              <td>{{ view.output.leafIndex }}</td>
+            </tr>
+            <tr *ngIf="view.output.leafNodePosition != null">
+              <td i18n="mweb.leaf-position">MMR leaf position</td>
+              <td>{{ view.output.leafNodePosition }}</td>
+            </tr>
+            <tr *ngIf="view.output.leafHash">
+              <td i18n="mweb.leaf-hash">MMR leaf hash</td>
+              <td class="mono">{{ view.output.leafHash }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <ng-container *ngIf="view.output.message as msg">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title" i18n="mweb.output-message">Message</h5>
+          <table class="table table-borderless table-striped">
+            <tbody>
+              <tr>
+                <td i18n="mweb.message-features">Features</td>
+                <td>{{ msg.features }}</td>
+              </tr>
+              <tr *ngIf="msg.keyExchangePubKeyHex">
+                <td i18n="mweb.key-exchange-pubkey">Key exchange pubkey</td>
+                <td class="mono">{{ msg.keyExchangePubKeyHex }}</td>
+              </tr>
+              <tr *ngIf="msg.viewTag != null">
+                <td i18n="mweb.view-tag">View tag</td>
+                <td>{{ msg.viewTag }}</td>
+              </tr>
+              <tr *ngIf="msg.maskedValue != null">
+                <td i18n="mweb.masked-value">Masked value</td>
+                <td>{{ msg.maskedValue }}</td>
+              </tr>
+              <tr *ngIf="msg.maskedNonceHex">
+                <td i18n="mweb.masked-nonce">Masked nonce</td>
+                <td class="mono">{{ msg.maskedNonceHex }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title" i18n="mweb.output-spend">Spend state</h5>
+
+        <p *ngIf="view.spentAtHeight == null">
+          <span class="badge badge-success" i18n="mweb.unspent">Unspent (UTXO)</span>
+        </p>
+
+        <ng-container *ngIf="view.spentAtHeight != null">
+          <table class="table table-borderless table-striped">
+            <tbody>
+              <tr>
+                <td i18n="mweb.spent-at-height">Spent at height</td>
+                <td>{{ view.spentAtHeight }}</td>
+              </tr>
+              <ng-container *ngIf="spend$ | async as spend">
+                <tr>
+                  <td i18n="mweb.spent-in-block">Spent in block</td>
+                  <td><a [routerLink]="['/block', spend.blockHash]">{{ spend.blockHash }}</a></td>
+                </tr>
+                <tr>
+                  <td i18n="mweb.input-hash">Input hash</td>
+                  <td class="mono">{{ spend.input.inputHash }}</td>
+                </tr>
+                <tr *ngIf="spend.input.featureFlags?.length">
+                  <td i18n="mweb.input-features">Features</td>
+                  <td>
+                    <span *ngFor="let f of spend.input.featureFlags" class="badge badge-secondary mr-1">{{ f }}</span>
+                  </td>
+                </tr>
+                <tr *ngIf="spend.input.outputPubKeyHex">
+                  <td i18n="mweb.input-pubkey">Output pubkey</td>
+                  <td class="mono">{{ spend.input.outputPubKeyHex }}</td>
+                </tr>
+                <tr *ngIf="spend.input.inputPubKeyHex">
+                  <td i18n="mweb.input-key-exchange">Input pubkey</td>
+                  <td class="mono">{{ spend.input.inputPubKeyHex }}</td>
+                </tr>
+                <tr *ngIf="spend.input.extraDataHex">
+                  <td i18n="mweb.input-extra-data">Extra data</td>
+                  <td class="mono">{{ spend.input.extraDataHex }}</td>
+                </tr>
+                <tr *ngIf="spend.input.signatureHex">
+                  <td i18n="mweb.input-signature">Signature</td>
+                  <td class="hex-block">{{ chunkHex(spend.input.signatureHex) }}</td>
+                </tr>
+                <tr *ngIf="spend.input.spendsFrozen">
+                  <td i18n="mweb.input-spends-frozen">Spends frozen output</td>
+                  <td>{{ spend.input.spendsFrozen }}</td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+          <div *ngIf="spendError" class="alert alert-warning">{{ spendError }}</div>
+        </ng-container>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>

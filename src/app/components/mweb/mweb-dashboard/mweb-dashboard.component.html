@@ -1,0 +1,152 @@
+<div class="container-xl mweb-dashboard">
+
+  <h1 class="float-left" i18n="mweb.title">MWEB Explorer</h1>
+
+  <div class="clearfix"></div>
+
+  <p class="mweb-intro" i18n="mweb.intro">
+    MWEB (MimbleWimble Extension Block) is Litecoin's opt-in privacy layer, activated in May 2022.
+    Litoshis pegged into MWEB are spent in a confidential side-chain where amounts and addresses
+    are hidden, and transactions are aggregated into a single block-level digest. This page tracks
+    MWEB supply, peg-ins, peg-outs, kernels, and recent activity as data emerges on-chain.
+  </p>
+
+  <ng-container *ngIf="syncStatus$ | async as sync">
+    <div *ngIf="sync && !sync.indexed" class="alert alert-warning sync-banner">
+      <ng-container i18n="mweb.syncing">MWEB indexer is catching up — data may be incomplete.</ng-container>
+    </div>
+  </ng-container>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title" i18n="mweb.current-supply">Current MWEB supply</h5>
+          <ng-container *ngIf="supply$ | async as supply; else supplyLoading">
+            <p class="card-text big-number">
+              {{ (supply.currentLitoshi / 100_000_000) | number: '1.2-2' }} <span class="symbol">LTC</span>
+            </p>
+            <p class="card-text">
+              <small>
+                <ng-container i18n="mweb.last-block-delta">Last block:</ng-container>
+                {{ supply.deltaLitoshi > 0 ? '+' : '' }}{{ (supply.deltaLitoshi / 100_000_000) | number: '1.0-8' }} LTC
+              </small>
+            </p>
+          </ng-container>
+          <ng-template #supplyLoading>
+            <div class="skeleton-loader"></div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title" i18n="mweb.tip">MWEB tip</h5>
+          <ng-container *ngIf="tip$ | async as tip; else tipLoading">
+            <p class="card-text big-number" *ngIf="tip.block">
+              <a [routerLink]="['/block', tip.block.blockHash]">#{{ tip.block.canonicalHeight }}</a>
+            </p>
+            <p class="card-text" *ngIf="tip.block?.mweb">
+              <small>
+                <ng-container i18n="mweb.kernels">Kernels:</ng-container> {{ tip.block.mweb.kernelCount }} ·
+                <ng-container i18n="mweb.peg-ins">Peg-ins:</ng-container> {{ (tip.block.mweb.totalPeginAmount / 100_000_000) | number: '1.0-8' }} LTC
+              </small>
+            </p>
+          </ng-container>
+          <ng-template #tipLoading>
+            <div class="skeleton-loader"></div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="incoming-mweb-txs card">
+    <div class="card-body">
+      <div class="incoming-header">
+        <h5 class="card-title" i18n="mweb.incoming">Incoming MWEB transactions</h5>
+        <ng-container *ngIf="pending$ | async as pending">
+          <small class="text-muted">
+            <span class="pulse-dot" *ngIf="pending.total > 0"></span>
+            <ng-container *ngIf="pending.total > 0; else noPending">
+              {{ pending.total | number }}
+              <ng-container i18n="mweb.pending-count">pending broadcast(s)</ng-container>
+            </ng-container>
+            <ng-template #noPending>
+              <ng-container i18n="mweb.no-pending">No pending broadcasts right now.</ng-container>
+            </ng-template>
+          </small>
+        </ng-container>
+      </div>
+
+      <ng-container *ngIf="pending$ | async as pending; else pendingLoading">
+        <div class="tx-flow" *ngIf="pending.items?.length; else pendingEmpty">
+          <div class="tx-pill"
+               *ngFor="let item of pending.items; trackBy: trackByMempoolTxId"
+               [title]="item.MempoolTxID">
+            <div class="tx-pill-id mono">{{ item.MempoolTxID | slice:0:10 }}…</div>
+            <div class="tx-pill-meta">
+              <span class="tx-pill-kernels">
+                <ng-container i18n="mweb.kernels">Kernels</ng-container>:
+                {{ item.KernelIDs?.length || 0 }}
+              </span>
+              <span class="tx-pill-fee" *ngIf="item.Fee != null">
+                {{ item.Fee | number }} lits
+              </span>
+            </div>
+            <small class="tx-pill-time" *ngIf="item.ObservedAt">{{ item.ObservedAt | date: 'shortTime' }}</small>
+          </div>
+        </div>
+        <ng-template #pendingEmpty>
+          <div class="tx-empty" i18n="mweb.no-pending-detail">Waiting for the next MWEB broadcast…</div>
+        </ng-template>
+      </ng-container>
+      <ng-template #pendingLoading>
+        <div class="tx-flow">
+          <div class="tx-pill skeleton" *ngFor="let _ of [0,1,2,3,4,5]"></div>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <app-mweb-stats-chart
+    chartType="balance"
+    [defaultRange]="'1y'"
+    title="MWEB supply over time"
+    subtitle="Cumulative MWEB-side LTC supply, per closed bucket"
+    i18n-title="@@mweb.chart.balance-title"
+    i18n-subtitle="@@mweb.chart.balance-subtitle">
+  </app-mweb-stats-chart>
+
+  <app-mweb-stats-chart
+    chartType="inputs_outputs"
+    [defaultRange]="'3m'"
+    title="MWEB inputs &amp; outputs"
+    subtitle="Counts of MWEB inputs spent and new MWEB outputs created"
+    i18n-title="@@mweb.chart.io-title"
+    i18n-subtitle="@@mweb.chart.io-subtitle">
+  </app-mweb-stats-chart>
+
+  <app-mweb-stats-chart
+    chartType="activity"
+    [defaultRange]="'3m'"
+    title="MWEB activity"
+    subtitle="Kernels, peg-ins, peg-outs, MWEB inputs and outputs per bucket"
+    i18n-title="@@mweb.chart.activity-title"
+    i18n-subtitle="@@mweb.chart.activity-subtitle">
+  </app-mweb-stats-chart>
+
+  <app-mweb-stats-chart
+    chartType="kernels"
+    [defaultRange]="'3m'"
+    title="MWEB transactions"
+    subtitle="MWEB kernels (≈ pre-aggregation transactions) per bucket"
+    i18n-title="@@mweb.chart.kernels-title"
+    i18n-subtitle="@@mweb.chart.kernels-subtitle">
+  </app-mweb-stats-chart>
+
+  <app-mweb-blocks-table></app-mweb-blocks-table>
+
+</div>

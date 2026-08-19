@@ -1,0 +1,40 @@
+<div class="mweb-stats-chart">
+  <div class="chart-header">
+    <div class="chart-titles">
+      <h3 *ngIf="title">{{ title }}</h3>
+      <small *ngIf="subtitle" class="text-muted">{{ subtitle }}</small>
+    </div>
+
+    <form [formGroup]="rangeForm" class="range-form" *ngIf="rangeForm">
+      <div class="btn-group btn-group-toggle" role="group">
+        <label
+          *ngFor="let preset of presets"
+          class="btn btn-primary btn-sm"
+          [class.active]="rangeForm.get('range').value === preset.value">
+          <input type="radio" formControlName="range" [value]="preset.value"> {{ preset.label }}
+        </label>
+      </div>
+    </form>
+  </div>
+
+  <form *ngIf="showCustom && customForm" [formGroup]="customForm" class="custom-range" (ngSubmit)="applyCustom()">
+    <label>
+      <span i18n="mweb.chart.from">From</span>
+      <input type="date" class="form-control form-control-sm" formControlName="from">
+    </label>
+    <label>
+      <span i18n="mweb.chart.to">To</span>
+      <input type="date" class="form-control form-control-sm" formControlName="to">
+    </label>
+    <button type="submit" class="btn btn-sm btn-primary" i18n="mweb.chart.apply">Apply</button>
+  </form>
+
+  <div *ngIf="errorMessage" class="alert alert-warning chart-error">{{ errorMessage }}</div>
+
+  <div class="chart-wrapper" [style.height.px]="height" [style.opacity]="isLoading ? 0.5 : 1">
+    <div class="chart" *browserOnly echarts [initOpts]="chartInitOptions" [options]="chartOptions"></div>
+    <div *ngIf="isLoading" class="chart-loading">
+      <div class="spinner-border text-light"></div>
+    </div>
+  </div>
+</div>

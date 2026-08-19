@@ -1,0 +1,36 @@
+<div class="container-xl mweb-mempool">
+
+  <h1 class="float-left" i18n="mweb.mempool-title">MWEB Mempool</h1>
+  <div class="clearfix"></div>
+
+  <ng-container *ngIf="page$ | async as page; else loading">
+    <p *ngIf="!page.items?.length" i18n="mweb.mempool-empty">No pending MWEB broadcasts right now.</p>
+
+    <table *ngIf="page.items?.length" class="table table-striped table-borderless">
+      <thead>
+        <tr>
+          <th i18n="mweb.mempool-observed">Observed</th>
+          <th i18n="mweb.mempool-tx-id">Tx ID</th>
+          <th class="text-right" i18n="mweb.mempool-fee">Fee</th>
+          <th class="text-right" i18n="mweb.mempool-kernels">Kernels</th>
+          <th i18n="mweb.mempool-status">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of page.items">
+          <td>
+            <small *ngIf="item.ObservedAt">{{ item.ObservedAt | date: 'short' }}</small>
+          </td>
+          <td class="mono">{{ item.MempoolTxID | slice:0:16 }}…</td>
+          <td class="text-right">{{ item.Fee ?? 0 }} lits</td>
+          <td class="text-right">{{ item.KernelIDs?.length || 0 }}</td>
+          <td><span class="badge badge-secondary">{{ item.Status }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </ng-container>
+
+  <ng-template #loading>
+    <div class="skeleton-loader"></div>
+  </ng-template>
+</div>

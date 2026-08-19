@@ -1,0 +1,85 @@
+<div class="mweb-blocks-table">
+  <div class="header">
+    <h2 i18n="mweb.blocks-title">MWEB blocks</h2>
+    <small *ngIf="asOfHeight" class="text-muted">
+      <ng-container i18n="mweb.blocks-count">{{ totalCount | number }} MWEB blocks indexed</ng-container>
+    </small>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
+  <div class="table-responsive">
+    <table class="table table-borderless table-striped mb-0">
+      <thead>
+        <tr>
+          <th class="text-left" i18n="latest-blocks.height">Height</th>
+          <th class="text-left" i18n="latest-blocks.timestamp">Timestamp</th>
+          <th class="text-right" i18n="mweb.kernels">Kernels</th>
+          <th class="text-right" i18n="mweb.peg-ins">Peg-ins</th>
+          <th class="text-right" i18n="mweb.peg-outs">Peg-outs</th>
+          <th class="text-right" i18n="mweb.inputs">Inputs</th>
+          <th class="text-right" i18n="mweb.outputs">Outputs</th>
+          <th class="text-right" i18n="mweb.amount">Amount</th>
+          <th class="text-right" i18n="mweb.change">Change</th>
+          <th class="text-right" i18n="latest-blocks.size">Size</th>
+        </tr>
+      </thead>
+
+      <tbody *ngIf="!isLoading; else skeleton" [style.opacity]="isLoading ? 0.5 : 1">
+        <tr *ngIf="items.length === 0">
+          <td colspan="10" class="text-center text-muted py-4" i18n="mweb.blocks-empty">No MWEB blocks on this page.</td>
+        </tr>
+        <tr *ngFor="let b of items; trackBy: trackByHeight">
+          <td class="text-left">
+            <a [routerLink]="['/block' | relativeUrl, b.block_hash]">{{ b.block_height | number }}</a>
+          </td>
+          <td class="text-left">
+            <app-timestamp [unixTime]="b.block_time_unix" [customFormat]="'yyyy-MM-dd HH:mm'" [hideTimeSince]="true"></app-timestamp>
+          </td>
+          <td class="text-right">{{ b.kernel_count | number }}</td>
+          <td class="text-right">{{ b.pegin_count | number }}</td>
+          <td class="text-right">{{ b.pegout_count | number }}</td>
+          <td class="text-right">{{ b.mweb_input_count | number }}</td>
+          <td class="text-right">{{ b.mweb_output_count | number }}</td>
+          <td class="text-right">
+            <span *ngIf="b.pegin_amount || b.pegout_amount; else dashAmount">
+              <span class="amount-up" *ngIf="b.pegin_amount">+{{ (b.pegin_amount / 100_000_000) | number: '1.0-4' }}</span>
+              <span class="amount-down" *ngIf="b.pegout_amount"> &minus;{{ (b.pegout_amount / 100_000_000) | number: '1.0-4' }}</span>
+              <small class="symbol"> LTC</small>
+            </span>
+            <ng-template #dashAmount><span class="text-muted">&mdash;</span></ng-template>
+          </td>
+          <td class="text-right" [class.amount-up]="b.delta_litoshi > 0" [class.amount-down]="b.delta_litoshi < 0">
+            {{ b.delta_litoshi > 0 ? '+' : '' }}{{ (b.delta_litoshi / 100_000_000) | number: '1.0-4' }}
+            <small class="symbol"> LTC</small>
+          </td>
+          <td class="text-right" [innerHTML]="'&lrm;' + (b.mweb_section_size | bytes: 2)"></td>
+        </tr>
+      </tbody>
+
+      <ng-template #skeleton>
+        <tbody>
+          <tr *ngFor="let _ of skeletonRows">
+            <td *ngFor="let __ of [0,1,2,3,4,5,6,7,8,9]">
+              <span class="skeleton-loader"></span>
+            </td>
+          </tr>
+        </tbody>
+      </ng-template>
+    </table>
+  </div>
+
+  <ngb-pagination
+    class="pagination-container float-right mt-2"
+    [class.disabled]="isLoading"
+    [collectionSize]="totalCount"
+    [rotate]="true"
+    [maxSize]="maxPaginationSize"
+    [pageSize]="pageSize"
+    [(page)]="page"
+    (pageChange)="pageChange($event)"
+    [boundaryLinks]="true"
+    [ellipses]="false">
+  </ngb-pagination>
+  <div class="clearfix"></div>
+</div>

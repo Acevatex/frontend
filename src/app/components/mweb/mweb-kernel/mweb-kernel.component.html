@@ -1,0 +1,86 @@
+<div class="container-xl mweb-kernel">
+
+  <h1 class="float-left" i18n="mweb.kernel-title">MWEB Kernel</h1>
+  <div class="clearfix"></div>
+
+  <div *ngIf="error" class="alert alert-warning">{{ error }}</div>
+
+  <ng-container *ngIf="lookup$ | async as lookup">
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title" i18n="mweb.kernel-id">Kernel ID</h5>
+        <p class="card-text mono">{{ lookup.kernelId }}</p>
+      </div>
+    </div>
+
+    <ng-container *ngIf="lookup.tier1 as t1">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title" i18n="mweb.kernel-block">Block</h5>
+          <table class="table table-borderless table-striped">
+            <tbody>
+              <tr>
+                <td i18n="mweb.block-hash">Block hash</td>
+                <td><a [routerLink]="['/block', t1.blockHash]">{{ t1.blockHash }}</a></td>
+              </tr>
+              <tr>
+                <td i18n="mweb.block-height">Height</td>
+                <td>{{ t1.blockHeight }}</td>
+              </tr>
+              <tr *ngIf="t1.kernel.fee != null">
+                <td i18n="mweb.fee">Fee</td>
+                <td>{{ t1.kernel.fee }} lits</td>
+              </tr>
+              <tr *ngIf="t1.kernel.pegin != null">
+                <td i18n="mweb.pegin-value">Peg-in value</td>
+                <td>{{ (t1.kernel.pegin / 100_000_000) | number: '1.0-8' }} LTC</td>
+              </tr>
+              <tr>
+                <td i18n="mweb.kernel-features">Features</td>
+                <td>
+                  <span *ngFor="let f of t1.kernel.featureFlags" class="badge badge-secondary mr-1">{{ f }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="lookup.tier2 as t2">
+      <div class="card" *ngIf="t2.outputSpends?.length">
+        <div class="card-body">
+          <h5 class="card-title" i18n="mweb.output-spends">Output spends</h5>
+          <table class="table table-borderless table-striped">
+            <thead>
+              <tr>
+                <th i18n="mweb.output-id">Output ID</th>
+                <th i18n="mweb.spent-at-height">Spent at height</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let spend of t2.outputSpends">
+                <td class="mono">{{ spend.outputId }}</td>
+                <td>{{ spend.spentAtHeight }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="lookup.notes?.length">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title" i18n="mweb.notes">Notes</h5>
+          <ul>
+            <li *ngFor="let note of lookup.notes">{{ note }}</li>
+          </ul>
+        </div>
+      </div>
+    </ng-container>
+
+  </ng-container>
+
+</div>

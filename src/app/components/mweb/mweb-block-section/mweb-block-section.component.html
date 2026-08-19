@@ -1,0 +1,308 @@
+<ng-container *ngIf="view$ | async as view">
+  <ng-container *ngIf="view.resp.block?.mwebPresent && view.resp.block?.mweb as mweb">
+    <ng-container *ngIf="mweb.kernelCount > 0 || mweb.inputCount > 0 || mweb.outputCount > 0
+                          || view.unmatchedPegins.length || view.unmatchedHogexPegouts.length">
+    <div class="mweb-section">
+
+      <h2 i18n="mweb.section-title">MWEB activity</h2>
+
+      <div class="row">
+        <div class="col">
+          <table class="table table-borderless table-striped">
+            <tbody>
+              <tr>
+                <td i18n="mweb.kernels">Kernels</td>
+                <td class="text-right">{{ mweb.kernelCount | number }}</td>
+              </tr>
+              <tr>
+                <td i18n="mweb.inputs">Inputs</td>
+                <td class="text-right">{{ mweb.inputCount | number }}</td>
+              </tr>
+              <tr>
+                <td i18n="mweb.outputs">Outputs</td>
+                <td class="text-right">{{ mweb.outputCount | number }}</td>
+              </tr>
+              <tr>
+                <td i18n="mweb.supply-change">Supply change</td>
+                <td class="text-right">
+                  {{ mweb.supplyChange > 0 ? '+' : '' }}{{ (mweb.supplyChange / 100_000_000) | number: '1.0-8' }} LTC
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="col">
+          <table class="table table-borderless table-striped">
+            <tbody>
+              <tr>
+                <td i18n="mweb.peg-ins-total">Peg-in total</td>
+                <td class="text-right">{{ (mweb.totalPeginAmount / 100_000_000) | number: '1.0-8' }} LTC</td>
+              </tr>
+              <tr>
+                <td i18n="mweb.peg-outs-total">Peg-out total</td>
+                <td class="text-right">{{ (mweb.totalPegoutAmount / 100_000_000) | number: '1.0-8' }} LTC</td>
+              </tr>
+              <tr>
+                <td i18n="mweb.peg-outs-count">Peg-outs</td>
+                <td class="text-right">{{ mweb.pegoutCount | number }}</td>
+              </tr>
+              <tr>
+                <td i18n="mweb.fees">Total fees</td>
+                <td class="text-right">{{ mweb.totalFees | number }} lits</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <ng-template #dash><span class="text-muted">&mdash;</span></ng-template>
+
+      <div class="mweb-details-toggle"
+        *ngIf="view.kernelRows.length || mweb.inputs?.length || mweb.outputs?.length">
+        <button
+          type="button"
+          class="btn btn-outline-info btn-sm"
+          [class.active]="showDetails"
+          (click)="toggleShowDetails()">
+          <ng-container *ngIf="!showDetails" i18n="mweb.show-details">More MWEB details</ng-container>
+          <ng-container *ngIf="showDetails" i18n="mweb.hide-details">Hide MWEB details</ng-container>
+        </button>
+      </div>
+
+      <div [hidden]="!showDetails">
+
+      <ng-container *ngIf="view.kernelRows.length">
+        <h3 i18n="mweb.kernels-title">Kernels ({{ view.kernelRows.length | number }})</h3>
+        <div class="table-responsive">
+          <table class="table table-striped table-borderless mweb-detail-table">
+            <thead>
+              <tr>
+                <th class="text-left">#</th>
+                <th class="text-left" i18n="mweb.kernel-id">Kernel ID</th>
+                <th class="text-left" i18n="mweb.kernel-features">Features</th>
+                <th class="text-right" i18n="mweb.fee">Fee</th>
+                <th class="text-right" i18n="mweb.pegin-value">Peg-in</th>
+                <th class="text-right" i18n="mweb.pegout-value">Peg-out</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let row of view.kernelRows | slice: pageStart(kernelsPage) : pageEnd(kernelsPage); trackBy: trackByKernel">
+                <tr>
+                  <td class="text-left">{{ row.kernel.index }}</td>
+                  <td class="text-left mono">
+                    <a [routerLink]="['/mweb/kernel', row.kernel.kernelId]" [title]="row.kernel.kernelId">{{ row.kernel.kernelId | slice: 0 : 14 }}…</a>
+                  </td>
+                  <td class="text-left">
+                    <ng-container *ngIf="row.kernel.featureFlags?.length; else dash">
+                      <span *ngFor="let f of row.kernel.featureFlags" class="badge badge-secondary mr-1">{{ f }}</span>
+                    </ng-container>
+                  </td>
+                  <td class="text-right">
+                    <ng-container *ngIf="row.kernel.fee != null; else dash">{{ row.kernel.fee | number }}</ng-container>
+                  </td>
+                  <td class="text-right">
+                    <ng-container *ngIf="row.kernel.pegin != null; else dash">{{ (row.kernel.pegin / 100_000_000) | number: '1.0-8' }}</ng-container>
+                  </td>
+                  <td class="text-right">
+                    <ng-container *ngIf="row.pegoutTotal > 0; else dash">{{ (row.pegoutTotal / 100_000_000) | number: '1.0-8' }}</ng-container>
+                  </td>
+                </tr>
+
+                <tr *ngIf="row.pegins.length || row.kernel.pegouts?.length" class="kernel-detail-row">
+                  <td colspan="6">
+                    <ul class="kernel-bridges">
+                      <li *ngFor="let pegin of row.pegins">
+                        <span class="bridge-tag" i18n="mweb.peg-in-label">peg-in</span>
+                        <a [routerLink]="['/tx', pegin.sourceTxHash]" class="mono" [title]="pegin.sourceTxHash">{{ pegin.sourceTxHash | slice: 0 : 14 }}…</a>:{{ pegin.sourceVoutIndex }}
+                        <span class="bridge-arrow">→</span>
+                        {{ (pegin.value / 100_000_000) | number: '1.0-8' }} LTC
+                      </li>
+                      <li *ngFor="let slot of (row.kernel.pegouts || [])">
+                        <span class="bridge-tag" i18n="mweb.peg-out-label">peg-out</span>
+                        <ng-container *ngIf="slot.addresses?.length; else noAddr">
+                          <ng-container *ngFor="let addr of slot.addresses; let last = last"
+                            ><a [routerLink]="['/address', addr]">{{ addr }}</a><ng-container *ngIf="!last">, </ng-container></ng-container>
+                        </ng-container>
+                        <ng-template #noAddr><span class="text-muted" i18n="mweb.no-address">(no address)</span></ng-template>
+                        <span class="bridge-arrow">→</span>
+                        {{ (slot.value / 100_000_000) | number: '1.0-8' }} LTC
+                        <small *ngIf="slot.hogExMatch" class="text-muted">
+                          (<ng-container i18n="mweb.hogex-vout">HogEx vout {{ slot.hogExMatch.hogExVoutIndex }}</ng-container>)
+                        </small>
+                      </li>
+                    </ul>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+        <ngb-pagination
+          *ngIf="view.kernelRows.length > pageSize"
+          class="pagination-container float-right mt-2"
+          [collectionSize]="view.kernelRows.length"
+          [pageSize]="pageSize"
+          [(page)]="kernelsPage"
+          [maxSize]="5"
+          [rotate]="true"
+          [boundaryLinks]="true"
+          [ellipses]="false">
+        </ngb-pagination>
+        <div class="clearfix"></div>
+      </ng-container>
+
+      <ng-container *ngIf="mweb.inputs?.length">
+        <h3 i18n="mweb.inputs-title">MWEB inputs ({{ mweb.inputs.length | number }})</h3>
+        <div class="table-responsive">
+          <table class="table table-striped table-borderless mweb-detail-table">
+            <thead>
+              <tr>
+                <th class="text-left">#</th>
+                <th class="text-left" i18n="mweb.spends-output">Spends output</th>
+                <th class="text-left" i18n="mweb.commitment">Commitment</th>
+                <th class="text-left" i18n="mweb.signature">Signature</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let input of mweb.inputs | slice: pageStart(inputsPage) : pageEnd(inputsPage); trackBy: trackByInput">
+                <td class="text-left">{{ input.index }}</td>
+                <td class="text-left mono">
+                  <a [routerLink]="['/mweb/output', input.outputId]" [title]="input.outputId">{{ input.outputId | slice: 0 : 24 }}…</a>
+                </td>
+                <td class="text-left mono" [title]="input.commitmentHex">{{ input.commitmentHex | slice: 0 : 24 }}…</td>
+                <td class="text-left mono" [title]="input.signatureHex || null">
+                  <ng-container *ngIf="input.signatureHex; else dash">{{ input.signatureHex | slice: 0 : 24 }}…</ng-container>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ngb-pagination
+          *ngIf="mweb.inputs.length > pageSize"
+          class="pagination-container float-right mt-2"
+          [collectionSize]="mweb.inputs.length"
+          [pageSize]="pageSize"
+          [(page)]="inputsPage"
+          [maxSize]="5"
+          [rotate]="true"
+          [boundaryLinks]="true"
+          [ellipses]="false">
+        </ngb-pagination>
+        <div class="clearfix"></div>
+      </ng-container>
+
+      <ng-container *ngIf="mweb.outputs?.length">
+        <h3 i18n="mweb.outputs-title">MWEB outputs ({{ mweb.outputs.length | number }})</h3>
+        <div class="table-responsive">
+          <table class="table table-striped table-borderless mweb-detail-table">
+            <thead>
+              <tr>
+                <th class="text-left">#</th>
+                <th class="text-left" i18n="mweb.output-id-col">Output ID</th>
+                <th class="text-left" i18n="mweb.commitment">Commitment</th>
+                <th class="text-right" i18n="mweb.mmr-leaf">MMR leaf</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let output of mweb.outputs | slice: pageStart(outputsPage) : pageEnd(outputsPage); trackBy: trackByOutput">
+                <td class="text-left">{{ output.index }}</td>
+                <td class="text-left mono">
+                  <a [routerLink]="['/mweb/output', output.outputId]" [title]="output.outputId">{{ output.outputId | slice: 0 : 24 }}…</a>
+                </td>
+                <td class="text-left mono" [title]="output.commitmentHex">{{ output.commitmentHex | slice: 0 : 24 }}…</td>
+                <td class="text-right">
+                  <ng-container *ngIf="output.leafIndex != null; else dash">{{ output.leafIndex | number }}</ng-container>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ngb-pagination
+          *ngIf="mweb.outputs.length > pageSize"
+          class="pagination-container float-right mt-2"
+          [collectionSize]="mweb.outputs.length"
+          [pageSize]="pageSize"
+          [(page)]="outputsPage"
+          [maxSize]="5"
+          [rotate]="true"
+          [boundaryLinks]="true"
+          [ellipses]="false">
+        </ngb-pagination>
+        <div class="clearfix"></div>
+      </ng-container>
+
+      </div>
+
+      <details *ngIf="view.unmatchedPegins.length || view.unmatchedHogexPegouts.length" class="mweb-unmatched">
+        <summary>
+          <ng-container i18n="mweb.unmatched-summary">Unmatched bridges</ng-container>
+          ({{ view.unmatchedPegins.length | number }} <ng-container i18n="mweb.peg-ins-label">peg-in</ng-container>,
+          {{ view.unmatchedHogexPegouts.length | number }} <ng-container i18n="mweb.peg-outs-label">peg-out</ng-container>)
+        </summary>
+
+        <ng-template #reasonBadge let-reason="reason">
+          <span class="badge badge-warning" [ngSwitch]="reason">
+            <ng-container *ngSwitchCase="'unmatched'" i18n="mweb.unmatch-reason.unmatched">no match</ng-container>
+            <ng-container *ngSwitchCase="'missing-index'" i18n="mweb.unmatch-reason.missing-index">missing index</ng-container>
+            <ng-container *ngSwitchCase="'index-out-of-range'" i18n="mweb.unmatch-reason.bad-kernel">bad kernel index</ng-container>
+            <ng-container *ngSwitchCase="'slot-out-of-range'" i18n="mweb.unmatch-reason.bad-slot">bad peg-out slot</ng-container>
+            <ng-container *ngSwitchDefault i18n="mweb.unmatch-reason.unknown">unknown reason</ng-container>
+          </span>
+        </ng-template>
+
+        <ng-container *ngIf="view.unmatchedPegins.length">
+          <h4 i18n="mweb.unmatched-pegins">Unmatched peg-ins</h4>
+          <table class="table table-striped table-borderless">
+            <thead>
+              <tr>
+                <th i18n="mweb.peg-in-source-tx">Source tx</th>
+                <th i18n="mweb.peg-in-vout">vout</th>
+                <th class="text-right" i18n="mweb.peg-in-value">Value</th>
+                <th i18n="mweb.peg-in-kernel">Kernel id</th>
+                <th i18n="mweb.unmatch-reason-col">Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let entry of view.unmatchedPegins">
+                <td class="mono"><a [routerLink]="['/tx', entry.pegin.sourceTxHash]" [title]="entry.pegin.sourceTxHash">{{ entry.pegin.sourceTxHash | slice: 0 : 14 }}…</a></td>
+                <td>{{ entry.pegin.sourceVoutIndex }}</td>
+                <td class="text-right">{{ (entry.pegin.value / 100_000_000) | number: '1.0-8' }} LTC</td>
+                <td class="mono" [title]="entry.pegin.kernelId">{{ entry.pegin.kernelId | slice: 0 : 14 }}…</td>
+                <td><ng-container *ngTemplateOutlet="reasonBadge; context: { reason: entry.reason }"></ng-container></td>
+              </tr>
+            </tbody>
+          </table>
+        </ng-container>
+
+        <ng-container *ngIf="view.unmatchedHogexPegouts.length">
+          <h4 i18n="mweb.unmatched-pegouts">Unmatched HogEx peg-outs</h4>
+          <table class="table table-striped table-borderless">
+            <thead>
+              <tr>
+                <th i18n="mweb.address">Address</th>
+                <th class="text-right" i18n="mweb.peg-out-value">Value</th>
+                <th class="text-right" i18n="mweb.hogex-vout-col">HogEx vout</th>
+                <th i18n="mweb.unmatch-reason-col">Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let entry of view.unmatchedHogexPegouts">
+                <td>
+                  <ng-container *ngIf="entry.pegout.addresses?.length; else dash">
+                    <ng-container *ngFor="let addr of entry.pegout.addresses; let last = last"
+                      ><a [routerLink]="['/address', addr]">{{ addr }}</a><ng-container *ngIf="!last">, </ng-container></ng-container>
+                  </ng-container>
+                </td>
+                <td class="text-right">{{ (entry.pegout.value / 100_000_000) | number: '1.0-8' }} LTC</td>
+                <td class="text-right">{{ entry.pegout.hogexVoutIndex }}</td>
+                <td><ng-container *ngTemplateOutlet="reasonBadge; context: { reason: entry.reason }"></ng-container></td>
+              </tr>
+            </tbody>
+          </table>
+        </ng-container>
+      </details>
+
+    </div>
+    </ng-container>
+  </ng-container>
+</ng-container>

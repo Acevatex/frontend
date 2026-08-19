@@ -1,0 +1,56 @@
+.mweb-blocks-table {
+  .header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+
+    h2 {
+      margin: 0;
+    }
+
+    .text-muted {
+      opacity: 0.7;
+    }
+  }
+
+  table {
+    th, td {
+      white-space: nowrap;
+      padding-top: 0.55rem !important;
+      padding-bottom: 0.55rem !important;
+      font-size: 0.92rem;
+    }
+    .symbol {
+      opacity: 0.65;
+    }
+  }
+
+  .amount-up {
+    color: rgb(66, 183, 71);
+  }
+  .amount-down {
+    color: rgb(183, 66, 66);
+  }
+
+  .disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .skeleton-loader {
+    width: 80%;
+    height: 14px;
+    display: inline-block;
+    background: linear-gradient(90deg, var(--secondary) 0%, rgba(255, 255, 255, 0.06) 50%, var(--secondary) 100%);
+    background-size: 200% 100%;
+    animation: skeleton 1.5s ease-in-out infinite;
+    border-radius: 3px;
+  }
+}
+
+@keyframes skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
